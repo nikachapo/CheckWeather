@@ -2,11 +2,14 @@ package com.example.testweatherapi;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkRequest;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -23,6 +26,7 @@ import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -33,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String KEY_LAST_CITY_NAME = "last-city";
 
     private TextView cityText,
-            descriptionText, celsiusText, timeText, windText,sunriseText,sunsetText;
+            descriptionText, celsiusText, timeText, windText, sunriseText, sunsetText;
     private ImageView image;
     private ProgressBar progressBar;
     private EditText searchEditText;
@@ -43,11 +47,12 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean isConnectedToInternet = false;
 
+    public LocationManager locationManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         sunriseText = findViewById(R.id.sunriseText);
         sunsetText = findViewById(R.id.sunsetText);
         windText = findViewById(R.id.windText);
@@ -74,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if (!isConnectedToInternet) {
                     Toast.makeText(getApplicationContext(), "No internet connection", Toast.LENGTH_LONG).show();
-                }else {
+                } else {
                     progressBar.setVisibility(View.VISIBLE);
                     String q = searchEditText.getText().toString().trim();
                     if (!q.isEmpty()) {
@@ -95,69 +100,91 @@ public class MainActivity extends AppCompatActivity {
         new AsyncTask<String, Void, String>() {
             @Override
             protected String doInBackground(String... strings) {
-                return NetworkUtils.getBookInfo(strings[0]);
+                return NetworkUtils.getWeather(strings[0]);
             }
 
             @SuppressLint({"DefaultLocale", "SetTextI18n"})
             @Override
             protected void onPostExecute(String s) {
-                try {
-                    JSONObject jsonObject = new JSONObject(s);
-
-                    JSONObject mainWeather = jsonObject.getJSONObject("main");
-                    JSONObject sysObject = jsonObject.getJSONObject("sys");
-
-
-                    try {
-                        JSONArray weatherArray = jsonObject.getJSONArray("weather");
-                        JSONObject weather = weatherArray.getJSONObject(0);
-                        String icon = (String) weather.get("icon");
-                        String url = "http://openweathermap.org/img/wn/" + icon + "@2x.png";
-
-                        Picasso.with(getApplicationContext()).load(url).into(image);
-
-                        String description = (String) weather.get("description");
-                        String cityName = (String) jsonObject.get("name");
-                        double kelvinToCelsius = (double) mainWeather.get("temp") - 273.15;
-                        Integer timeMillis = (Integer) jsonObject.get("dt");
-                        Integer sunriseMillis = (Integer) sysObject.get("sunrise");
-                        Integer sunsetMillis = (Integer) sysObject.get("sunset");
-                        String time = getFormattedTime((long)timeMillis);
-                        String sunrise = getFormattedTime((long)sunriseMillis);
-                        String sunset = getFormattedTime((long)sunsetMillis);
-
-                        double wind = (double) jsonObject.getJSONObject("wind").get("speed");
-
-                        descriptionText.setText(description);
-                        cityText.setText(cityName);
-                        celsiusText.setText(String.format("%.2f", kelvinToCelsius) + "°C");
-                        timeText.setText(time);
-                        windText.setText(wind+"kph");
-                        sunriseText.setText(sunrise);
-                        sunsetText.setText(sunset);
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                } catch (Exception e) {
-                    // If onPostExecute does not receive a proper JSON string,
-                    // update the UI to show failed results.
-                    Toast.makeText(getApplicationContext(), "City not found!", Toast.LENGTH_LONG).show();
-
-                    e.printStackTrace();
-                } finally {
-                    progressBar.setVisibility(View.GONE);
-                }
+                processJsonString(s);
             }
         }.execute(q);
 
     }
 
-    public static String getFormattedTime(long millis) {
-        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm");
+    @SuppressLint("StaticFieldLeak")
+    private void loadInfo(double lon,double lat) {
+        new AsyncTask<Double, Void, String>() {
+            @Override
+            protected String doInBackground(Double... doubles) {
+                return NetworkUtils.getWeather(doubles[0],doubles[1]);
+            }
 
-        Date date = new Date(millis*1000);
+            @SuppressLint({"DefaultLocale", "SetTextI18n"})
+            @Override
+            protected void onPostExecute(String s) {
+                processJsonString(s);
+            }
+        }.execute(lon,lat);
+
+    }
+
+
+    private void processJsonString(String s) {
+        try {
+            JSONObject jsonObject = new JSONObject(s);
+
+            JSONObject mainWeather = jsonObject.getJSONObject("main");
+            JSONObject sysObject = jsonObject.getJSONObject("sys");
+
+
+            try {
+                JSONArray weatherArray = jsonObject.getJSONArray("weather");
+                JSONObject weather = weatherArray.getJSONObject(0);
+                String icon = (String) weather.get("icon");
+                String url = "http://openweathermap.org/img/wn/" + icon + "@2x.png";
+
+                Picasso.with(getApplicationContext()).load(url).into(image);
+
+                String description = (String) weather.get("description");
+                String cityName = (String) jsonObject.get("name");
+                double kelvinToCelsius = (double) mainWeather.get("temp") - 273.15;
+                Integer timeMillis = (Integer) jsonObject.get("dt");
+                Integer sunriseMillis = (Integer) sysObject.get("sunrise");
+                Integer sunsetMillis = (Integer) sysObject.get("sunset");
+                String time = getFormattedTime((long) timeMillis);
+                String sunrise = getFormattedTime((long) sunriseMillis);
+                String sunset = getFormattedTime((long) sunsetMillis);
+
+                double wind = jsonObject.getJSONObject("wind").getDouble("speed");
+
+                descriptionText.setText(description);
+                cityText.setText(cityName);
+                celsiusText.setText(String.format("%.2f", kelvinToCelsius) + "°C");
+                timeText.setText(time);
+                windText.setText(wind + " kph");
+                sunriseText.setText(sunrise);
+                sunsetText.setText(sunset);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        } catch (Exception e) {
+            // If onPostExecute does not receive a proper JSON string,
+            // update the UI to show failed results.
+            Toast.makeText(getApplicationContext(), "City not found!", Toast.LENGTH_LONG).show();
+
+            e.printStackTrace();
+        } finally {
+            progressBar.setVisibility(View.GONE);
+        }
+    }
+
+    public static String getFormattedTime(long millis) {
+        @SuppressLint("SimpleDateFormat")
+        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm");
+        Date date = new Date(millis * 1000);
         return formatter.format(date);
     }
 
@@ -200,5 +227,39 @@ public class MainActivity extends AppCompatActivity {
         if (connectivityManager != null && networkCallback != null) {
             connectivityManager.unregisterNetworkCallback(networkCallback);
         }
+    }
+
+
+
+
+    private Location getLastKnownLocation() {
+        locationManager = (LocationManager)getApplicationContext().getSystemService(LOCATION_SERVICE);
+        List<String> providers = locationManager.getProviders(true);
+        Location bestLocation = null;
+        for (String provider : providers) {
+            @SuppressLint("MissingPermission")
+            Location l = locationManager.getLastKnownLocation(provider);
+            if (l == null) {
+                continue;
+            }
+            if (bestLocation == null || l.getAccuracy() < bestLocation.getAccuracy()) {
+                // Found best last known location: %s", l);
+                bestLocation = l;
+            }
+        }
+        return bestLocation;
+    }
+
+    public void searchWithLocation(View view) {
+        Location location = getLastKnownLocation();
+        if (location != null) {
+            Log.e("TAG", "GPS is on");
+            double latitude = location.getLatitude();
+            double longitude = location.getLongitude();
+            loadInfo(longitude,latitude);
+        }else
+            Toast.makeText(getApplicationContext(), "No location found", Toast.LENGTH_LONG).show();
+
+
     }
 }

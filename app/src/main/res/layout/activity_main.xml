@@ -29,7 +29,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_toStartOf="@id/searchButton"
-        android:fontFamily="@font/aladin"
         android:hint="Enter city name"
         android:textColor="@android:color/white"
         android:textColorHint="@android:color/white" />
@@ -41,14 +40,26 @@
         android:layout_alignParentEnd="true"
         android:background="@drawable/ic_search_24dp" />
 
+    <ImageButton
+        android:layout_marginTop="24dp"
+        android:id="@+id/searchWithLocationButton"
+        android:layout_width="40sp"
+        android:layout_height="40dp"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@id/searchButton"
+        android:onClick="searchWithLocation"
+        android:background="@drawable/ic_gps_24dp" />
+
+
     <TextView
         android:id="@+id/cityText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/celsiusText"
-        android:fontFamily="@font/aladin"
-        android:textColor="@android:color/white"
+        android:textColor="#E6FF00"
         android:textSize="30sp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
         android:textStyle="bold"
         tools:text="Tbilisi" />
 
@@ -58,17 +69,19 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/cityText"
         android:layout_marginTop="16dp"
-        android:fontFamily="@font/aladin"
         android:textColor="@android:color/white"
-        android:textSize="20sp"
-        tools:text="mostly cloud" />
+        android:textSize="24sp"
+        tools:text="mostly cloud"
+        android:layout_centerHorizontal="true"/>
 
-    <ImageView
+    <com.airbnb.lottie.LottieAnimationView
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_below="@id/weatherImage"
         android:layout_toStartOf="@id/celsiusText"
-        android:src="@drawable/temp_icon" />
+        app:lottie_loop="true"
+        app:lottie_autoPlay="true"
+        app:lottie_fileName="thermometer.json"/>
 
     <TextView
         android:id="@+id/celsiusText"
@@ -76,19 +89,20 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/weatherImage"
         android:layout_centerHorizontal="true"
-        android:fontFamily="@font/aladin"
         android:textColor="@android:color/white"
         android:textSize="30sp"
         tools:text="32C" />
 
-    <ImageView
+    <com.airbnb.lottie.LottieAnimationView
         android:id="@+id/windImage"
-        android:layout_width="35dp"
-        android:layout_height="35dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:layout_marginStart="24dp"
         android:layout_below="@id/weatherImage"
         android:layout_toEndOf="@id/celsiusText"
-        android:src="@drawable/wind_icon" />
+        app:lottie_loop="true"
+        app:lottie_autoPlay="true"
+        app:lottie_fileName="wind_animat.json"/>
 
     <TextView
         android:id="@+id/windText"
@@ -96,8 +110,9 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/weatherImage"
         android:layout_marginStart="4dp"
+        android:layout_marginTop="6dp"
         android:layout_toEndOf="@id/windImage"
-        android:textColor="@android:color/white"
+        android:textColor="@color/colorAccent"
         android:textSize="18sp"
         tools:text="44km/h" />
 
@@ -122,7 +137,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@id/sunriseImage"
-        tools:text="sunrise"
+        android:text="sunrise"
         android:textSize="20sp"
         android:textColor="@android:color/white"/>
 
@@ -138,15 +153,15 @@
         android:layout_height="wrap_content"
         android:layout_above="@id/sunsetImage"
         android:layout_alignParentEnd="true"
-        tools:text="sunset"
+        android:text="sunset"
         android:textSize="20sp"
         android:textColor="@android:color/white"/>
 
     <ImageView
         android:id="@+id/line"
         android:layout_width="wrap_content"
-        android:layout_height="5dp"
-        android:background="@android:color/holo_green_light"
+        android:layout_height="2dp"
+        android:background="@drawable/line_bg"
         android:layout_toEndOf="@id/sunriseImage"
         android:layout_toStartOf="@id/sunsetImage"
         android:layout_marginBottom="48dp"

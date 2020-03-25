@@ -38,4 +38,7 @@ dependencies {
 
     //Picasso
     implementation 'com.squareup.picasso:picasso:2.5.2'
+
+    //lottie animations
+    implementation 'com.airbnb.android:lottie:2.8.0'
 }
