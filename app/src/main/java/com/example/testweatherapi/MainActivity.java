@@ -73,8 +73,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                //stop updates
-                locationManager.removeUpdates(locationListener);
+                if (locationManager != null) {
+                    //stop updates
+                    locationManager.removeUpdates(locationListener);
+                }
 
                 InputMethodManager inputManager =
                         (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
